@@ -8,10 +8,11 @@ public class BoidsController : MonoBehaviour
 
     public float movementSpeed = 1f;
     public GameObject m_Target;
-    Vector3 ForwardsMovement;
-    Vector3 absoluteForwards;
+    Vector3 ForwardsNormal;
+  
     Vector3 TargetPostionNormal;
 
+    public Transform FirePoint;
 
     void Start()
     {
@@ -23,6 +24,7 @@ public class BoidsController : MonoBehaviour
     {
         RotMove();
         ForwardsMove();
+        Raycasting();
     }
 
     void SetTargetGoal(GameObject other) {
@@ -31,19 +33,27 @@ public class BoidsController : MonoBehaviour
 
 
     void ForwardsMove() {
-        Vector3 FM = transform.forward * movementSpeed * Time.deltaTime;
-        transform.position += FM;
-        ForwardsMovement = FM;
 
-        Vector3 AF = Vector3.forward * movementSpeed * Time.deltaTime;
-        transform.position += AF;
-        absoluteForwards = AF;
-      
+        transform.Translate(Vector3.forward * movementSpeed * Time.deltaTime);
+        Vector3 FN = transform.forward * movementSpeed * Time.deltaTime;
+        ForwardsNormal = FN;
+       
     }
 
     void RotMove() {
 
-        TargetPostionNormal = new Vector3(m_Target.transform.position.x, m_Target.transform.position.y, m_Target.transform.position.z);
-        transform.Rotate(TargetPostionNormal);
+        transform.LookAt(m_Target.transform);
+       // TargetPostionNormal = new Vector3(m_Target.transform.position.x, m_Target.transform.position.y, m_Target.transform.position.z);
+      // transform.Rotate(TargetPostionNormal);
+    }
+
+    void Raycasting()
+    {
+        RaycastHit hit;
+       
+        if  (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 50f))
+        {
+            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 20f, Color.green);
+        }
     }
 }
