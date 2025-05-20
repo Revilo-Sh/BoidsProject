@@ -10,24 +10,14 @@ public class OctreeNode
     float minSize;
     Bounds[] childBounds;
     OctreeNode[] children = null;
+    List<Collider> objects;
 
     public OctreeNode(Bounds b, float minNodeSize)
     {
         NodeBounds = b;
         minSize = minNodeSize;
 
-        float quarter = NodeBounds.size.y / 4.0f;
-        float childLength = NodeBounds.size.y / 2;
-        Vector3 childsize = new Vector3(childLength, childLength, childLength);
-        childBounds = new Bounds[8];
-        childBounds[0] = new Bounds(NodeBounds.center + new Vector3(-quarter, quarter, -quarter), childsize);
-        childBounds[1] = new Bounds(NodeBounds.center + new Vector3(quarter, quarter, -quarter), childsize);
-        childBounds[2] = new Bounds(NodeBounds.center + new Vector3(-quarter, quarter, quarter), childsize);
-        childBounds[3] = new Bounds(NodeBounds.center + new Vector3(quarter, quarter, quarter), childsize);
-        childBounds[4] = new Bounds(NodeBounds.center + new Vector3(quarter, -quarter, -quarter), childsize);
-        childBounds[5] = new Bounds(NodeBounds.center + new Vector3(-quarter, -quarter, -quarter), childsize);
-        childBounds[6] = new Bounds(NodeBounds.center + new Vector3(quarter, -quarter, quarter), childsize);
-        childBounds[7] = new Bounds(NodeBounds.center + new Vector3(-quarter, -quarter, quarter), childsize);
+        objects = new List<Collider>();
         
     }
 
@@ -40,32 +30,68 @@ public class OctreeNode
         DivideAndAdd(go);
     }
 
+    public void CreateChildNodes()
+    {
+        float quarter = NodeBounds.size.y / 4.0f;
+        float childLength = NodeBounds.size.y / 2.0f;
+        Vector3 childsize = new Vector3(childLength, childLength, childLength);
+
+        children = new OctreeNode[8];
+        children[0] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(-quarter, quarter, -quarter), childsize), minSize);
+        children[1] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(quarter, quarter, -quarter), childsize), minSize);
+        children[2] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(-quarter, quarter, quarter), childsize), minSize);
+        children[3] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(quarter, quarter, quarter), childsize), minSize);
+        children[4] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(quarter, -quarter, -quarter), childsize), minSize);
+        children[5] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(-quarter, -quarter, -quarter), childsize), minSize);
+        children[6] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(quarter, -quarter, quarter), childsize), minSize);
+        children[7] = new OctreeNode(new Bounds(NodeBounds.center + new Vector3(-quarter, -quarter, quarter), childsize), minSize);
+    }
+
     public void DivideAndAdd(GameObject go)
     {
-        if (NodeBounds.size.y <= minSize)
+        if (children != null)
         {
+            
+            Disperse(go);
             return;
         }
+
+        
         if (children == null)
         {
-            children = new OctreeNode[8];
-        }
+            //If collides with this node, add to objects list
+            if (NodeBounds.Intersects(go.GetComponent<Collider>().bounds))
+            {
+                objects.Add(go.GetComponent<Collider>());
+                    //If objects list is full, create child nodes and add objects to them.
+                    if (objects.Count >= 4)
+                    {
+                        CreateChildNodes();
 
-        bool dividing = false;
-        for (int i = 0; i < 8; i++) {
-            if (children[i] == null) {
-                children[i] = new OctreeNode(childBounds[i], minSize);
-            }
-            if (childBounds[i].Intersects(go.GetComponent<Collider>().bounds)) { 
-                dividing = true;
-                children[i].DivideAndAdd(go);
-                
+                        foreach (Collider col in objects)
+                        {
+                            Disperse(col.gameObject);
+                        }
+                        objects.Clear();
+                    }
+
+                    
             }
         }
-        if (dividing == false)
-        {
-            children = null;
-        }
+        
+        
+        
+    }
+    
+    void Disperse(GameObject go)
+    {
+        for (int i = 0; i < 8; i++) 
+            {
+                if (children[i].NodeBounds.Intersects(go.GetComponent<Collider>().bounds)) 
+                { 
+                    children[i].DivideAndAdd(go);
+                }
+            }
     }
 
     public void Draw()
