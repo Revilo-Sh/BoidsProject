@@ -21,9 +21,7 @@ public class BoidsController : MonoBehaviour
     // Boids 3 Laws Verables
     public BoidsController[] allboids;
     private BoidsController[] neighborsBoids;
-    int neighborsCount = 0;
-    public int SeparationForce;
-    private int neighborDistanceZone = 5;
+    private float SeparationDistanceVal = 5;
     
     
 
@@ -100,7 +98,21 @@ public class BoidsController : MonoBehaviour
 
     void Separation()
     {
+        for (int i = 0; i < allboids.Length; i++)
+        {
+            float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
 
+            if (betweendistance > SeparationDistanceVal)
+            {
+                // shot a raycast to the object
+                // gets its rot nomral 
+                // rotate the op dec
+                RaycastHit hit;
+                
+
+            }
+
+        }
     }
 
     void Alignment()

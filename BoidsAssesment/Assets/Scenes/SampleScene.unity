@@ -1640,7 +1640,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flockUnitPrefab: {fileID: 788819929135016902, guid: ebb9b1fa7d9d605498ed71e5eb94c2fb,
     type: 3}
-  GroupSize: 3
+  GroupSize: 4
   spawnbounds: {x: 20, y: 20, z: 20}
 --- !u!4 &1607713420
 Transform:
