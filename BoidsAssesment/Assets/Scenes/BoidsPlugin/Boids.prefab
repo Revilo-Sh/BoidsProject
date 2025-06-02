@@ -54,8 +54,11 @@ MonoBehaviour:
   raycastDistance: 5
   avoidanceForce: 5
   allboids: []
-  SeparationDistanceVal: 8
+  SeparationDistanceVal: 5
   neighborsDistanceVal: 10
+  aliagmentdistance: 20
+  alignmentWeight: 0.01
+  cohesionWeight: 1
 --- !u!136 &967537523303979325
 CapsuleCollider:
   m_ObjectHideFlags: 0

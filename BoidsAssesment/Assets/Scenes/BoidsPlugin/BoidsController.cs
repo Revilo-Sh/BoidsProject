@@ -25,8 +25,11 @@ public class BoidsController : MonoBehaviour
     private BoidsController[] neighborsBoids;
     public float SeparationDistanceVal = 5;
     public float neighborsDistanceVal = 10;
-    private float rotSpeed = 125f;
-    
+    public float aliagmentdistance = 20;
+    private float rotSpeed = 180f;
+    public float alignmentWeight = 1f;
+    public float cohesionWeight = 1f;
+
 
     bool ISneighbors;
 
@@ -44,9 +47,15 @@ public class BoidsController : MonoBehaviour
 
         Vector3 separationForce = Separation();
         velocity += separationForce;
+
+
+        Vector3 alignmentForce = Alignment();
+        velocity += alignmentForce;
+
+        Vector3 cohesionForce = Cohesion();
+        velocity += cohesionForce * cohesionWeight;
+
         velocity = Vector3.ClampMagnitude(velocity, speed);
-
-
         transform.position += transform.forward * speed * Time.deltaTime;
         quaternion toRotation = Quaternion.LookRotation(velocity, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotSpeed * Time.deltaTime);
@@ -165,69 +174,73 @@ public class BoidsController : MonoBehaviour
         return separation * avoidanceForce;
     }
 
-    void Alignment()
-    {
 
+    Vector3 Alignment()
+    {
+        Vector3 alignmentVelocity = Vector3.zero;
+        int count = 0;
+        for (int i = 0; i < allboids.Length; i++)
+        {
+            float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
+
+            if (betweendistance < aliagmentdistance)
+            {
+                alignmentVelocity += allboids[i].GetComponent<BoidsController>().velocity;
+                count++;
+            }
+        }
+
+        if (count > 0)
+        {
+            alignmentVelocity /= count;
+            alignmentVelocity.Normalize();
+            alignmentVelocity *= speed;
+            Vector3 steering = alignmentVelocity - velocity;
+            steering = Vector3.ClampMagnitude(steering, maxforce);
+            return steering * alignmentWeight;
+        }
+        return Vector3.zero;
     }
 
-    void Cohesion()
-    {
 
+    Vector3 Cohesion()
+    {
+        Vector3 CohesionPoint = Vector3.zero; 
+        int count = 0;
+
+        for (int i = 0; i < allboids.Length; i++)
+        {
+            float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
+
+            if (betweendistance < neighborsDistanceVal)
+            {
+                CohesionPoint += allboids[i].transform.position + (allboids[i].GetComponent<BoidsController>().velocity * 10f);
+                count++;
+            }
+        }
+
+        if (count > 0) {
+
+            CohesionPoint /= (float)count;
+            //CohesionVelocity -= transform.position;
+            //CohesionPoint.Normalize();
+            if (ShowGizmos == true)
+            {
+                Debug.DrawLine(transform.position, CohesionPoint * 10f, Color.red);
+            }
+            
+            return (CohesionPoint - transform.position).normalized;
+
+            //Vector3 cohesionDirection = CohesionVelocity - transform.position;
+            //cohesionDirection.Normalize();
+            //cohesionDirection *= speed;
+            //Vector3 steering = cohesionDirection - velocity;
+            //steering = Vector3.ClampMagnitude(steering, maxforce);
+            
+
+            //return steering * cohesionWeight;
+        }
+        return Vector3.zero;
     }
 
- 
-
-
-    // Start is called before the first frame update
-
-    //public float movementSpeed = 1f;
-    //public GameObject m_Target;
-    //Vector3 ForwardsNormal;
-
-    //Vector3 TargetPostionNormal;
-
-    //public Transform FirePoint;
-
-    //void Start()
-    //{
-
-    //}
-
-    //// Update is called once per frame
-    //void Update()
-    //{
-    //    RotMove();
-    //    ForwardsMove();
-    //    Raycasting();
-    //}
-
-    //void SetTargetGoal(GameObject other) {
-    //    m_Target = other;
-    //}
-
-
-    //void ForwardsMove() {
-
-    //    transform.Translate(Vector3.forward * movementSpeed * Time.deltaTime);
-    //    Vector3 FN = transform.forward * movementSpeed * Time.deltaTime;
-    //    ForwardsNormal = FN;
-
-    //}
-
-    //void RotMove() {
-
-    //    transform.LookAt(m_Target.transform);
-    //   // TargetPostionNormal = new Vector3(m_Target.transform.position.x, m_Target.transform.position.y, m_Target.transform.position.z);
-    //  // transform.Rotate(TargetPostionNormal);
-    //}
-
-    //void Raycasting()
-    //{
-    //    RaycastHit hit;
-
-    //    if  (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 50f))
-    //    {
-    //        Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 20f, Color.green);
-    //    }
-    //}
 }

@@ -600,6 +600,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: BoidsBoundModifier
       objectReference: {fileID: 0}
+    - target: {fileID: 7601530141819174710, guid: 001e09831e9e3f84da1237a9ab6265d5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8463595081246086151, guid: 001e09831e9e3f84da1237a9ab6265d5,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1641,7 +1646,7 @@ MonoBehaviour:
   flockUnitPrefab: {fileID: 788819929135016902, guid: ebb9b1fa7d9d605498ed71e5eb94c2fb,
     type: 3}
   GroupSize: 100
-  spawnbounds: {x: 5, y: 5, z: 5}
+  spawnbounds: {x: 50, y: 50, z: 50}
 --- !u!4 &1607713420
 Transform:
   m_ObjectHideFlags: 0
