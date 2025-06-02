@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Unity.Mathematics;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 public class BoidsController : MonoBehaviour
@@ -12,8 +13,9 @@ public class BoidsController : MonoBehaviour
 
     //Normal
     public float speed = 5f;
+    public float maxforce = 0.5f;
     public float raycastDistance = 5f;
-    public float avoidanceForce = 5f;
+    public float avoidanceForce = 1.5f;
 
     private Vector3 velocity;
 
@@ -21,9 +23,14 @@ public class BoidsController : MonoBehaviour
     // Boids 3 Laws Verables
     public BoidsController[] allboids;
     private BoidsController[] neighborsBoids;
-    private float SeparationDistanceVal = 5;
+    public float SeparationDistanceVal = 5;
+    public float neighborsDistanceVal = 10;
+    private float rotSpeed = 125f;
     
-    
+
+    bool ISneighbors;
+
+
 
     private void Start()
     {
@@ -34,7 +41,18 @@ public class BoidsController : MonoBehaviour
     {
         //WorldCollision();
         AddBoidsObjects();
+
+        Vector3 separationForce = Separation();
+        velocity += separationForce;
+        velocity = Vector3.ClampMagnitude(velocity, speed);
+
+
         transform.position += transform.forward * speed * Time.deltaTime;
+        quaternion toRotation = Quaternion.LookRotation(velocity, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotSpeed * Time.deltaTime);
+       
+        //transform.position += velocity * speed * Time.deltaTime;
+
     }
 
 
@@ -63,9 +81,9 @@ public class BoidsController : MonoBehaviour
 
                 if (ShowGizmos == true)
                 {
-                     Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.red);
+                    Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.red);
                 }
-               
+
             }
             else
             {
@@ -73,7 +91,7 @@ public class BoidsController : MonoBehaviour
                 {
                     Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.green);
                 }
-                
+
             }
         }
 
@@ -84,11 +102,11 @@ public class BoidsController : MonoBehaviour
             Quaternion TargetRotation = Quaternion.LookRotation(desiredDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, TargetRotation, Time.deltaTime * avoidanceForce);
         }
-       
+
     }
 
 
-    
+
 
     void AddBoidsObjects()
     {
@@ -96,23 +114,55 @@ public class BoidsController : MonoBehaviour
     }
 
 
-    void Separation()
+    Vector3 Separation()
     {
+        Vector3 separation = Vector3.zero;
+
         for (int i = 0; i < allboids.Length; i++)
         {
             float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
 
-            if (betweendistance > SeparationDistanceVal)
+            if (betweendistance < neighborsDistanceVal)
             {
-                // shot a raycast to the object
-                // gets its rot nomral 
-                // rotate the op dec
-                RaycastHit hit;
-                
+                Vector3 origin = transform.position;
+                Vector3 direction = (allboids[i].transform.position - origin).normalized;
+    
 
+
+                // Now need to make it that once in the close distance the move the boids away
+                Vector3 otherboidsTocurrBoid = transform.position - allboids[i].transform.position;
+
+                if (betweendistance < SeparationDistanceVal)
+                {
+                    otherboidsTocurrBoid.Normalize();
+                    otherboidsTocurrBoid /= SeparationDistanceVal;
+                    separation += otherboidsTocurrBoid;
+                }
+
+              
+                if (ShowGizmos == true)
+                {
+                    if (betweendistance < SeparationDistanceVal)
+                    {
+                        Debug.DrawLine(transform.position, allboids[i].transform.position, Color.red);
+                    }
+                    else
+                    {
+                        Debug.DrawLine(transform.position, allboids[i].transform.position, Color.yellow);
+                    }
+
+                }
             }
-
         }
+
+        if (separation.magnitude > 0)
+        {
+            separation.Normalize();
+            separation *= speed;
+            separation -= velocity;
+            separation = Vector3.ClampMagnitude(separation, maxforce);
+        }
+        return separation * avoidanceForce;
     }
 
     void Alignment()
@@ -125,6 +175,7 @@ public class BoidsController : MonoBehaviour
 
     }
 
+ 
 
 
     // Start is called before the first frame update
