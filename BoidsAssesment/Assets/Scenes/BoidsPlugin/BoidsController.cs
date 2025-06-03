@@ -1,13 +1,8 @@
-using JetBrains.Annotations;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using Unity.Mathematics;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 public class BoidsController : MonoBehaviour
 {
+
     //Debug
     public bool ShowGizmos = false;
 
@@ -16,6 +11,7 @@ public class BoidsController : MonoBehaviour
     public float maxforce = 0.5f;
     public float raycastDistance = 5f;
     public float avoidanceForce = 1.5f;
+    public int BoidTypeID;
 
     private Vector3 velocity;
 
@@ -29,6 +25,7 @@ public class BoidsController : MonoBehaviour
     private float rotSpeed = 180f;
     public float alignmentWeight = 1f;
     public float cohesionWeight = 1f;
+    public float cohesionCombindDistance = 10f;
 
 
     bool ISneighbors;
@@ -37,12 +34,13 @@ public class BoidsController : MonoBehaviour
 
     private void Start()
     {
+        SetBoidType();
         velocity = transform.forward * speed;
     }
 
     private void Update()
     {
-        //WorldCollision();
+        WorldCollision();
         AddBoidsObjects();
 
         Vector3 separationForce = Separation();
@@ -57,8 +55,9 @@ public class BoidsController : MonoBehaviour
 
         velocity = Vector3.ClampMagnitude(velocity, speed);
         transform.position += transform.forward * speed * Time.deltaTime;
-        quaternion toRotation = Quaternion.LookRotation(velocity, Vector3.up);
+        Quaternion toRotation = Quaternion.LookRotation(velocity, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotSpeed * Time.deltaTime);
+
        
         //transform.position += velocity * speed * Time.deltaTime;
 
@@ -85,20 +84,25 @@ public class BoidsController : MonoBehaviour
             // Casting a Raycast fowards
             if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, raycastDistance))
             {
-                desiredDirection += hit.normal * avoidanceForce;
-                obstcaleDetected = true;
-
-                if (ShowGizmos == true)
+                if (hit.transform.tag.Equals("WorldObjects"))
                 {
-                    Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.red);
+                    desiredDirection += hit.normal * avoidanceForce;
+                    obstcaleDetected = true;
+
+                    if (ShowGizmos == true)
+                    {
+                        Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.blue);
+                    }
+
                 }
+
 
             }
             else
             {
                 if (ShowGizmos == true)
                 {
-                    Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.green);
+                    Debug.DrawRay(transform.position, transform.forward * raycastDistance, Color.white);
                 }
 
             }
@@ -114,8 +118,10 @@ public class BoidsController : MonoBehaviour
 
     }
 
-
-
+    public void SetBoidType()
+    {
+        BoidTypeID = Random.Range(1, 3);
+    }
 
     void AddBoidsObjects()
     {
@@ -148,16 +154,33 @@ public class BoidsController : MonoBehaviour
                     separation += otherboidsTocurrBoid;
                 }
 
-              
+                if (allboids[i].BoidTypeID != BoidTypeID)
+                {
+                    otherboidsTocurrBoid.Normalize();
+                    otherboidsTocurrBoid /= SeparationDistanceVal;
+                    separation += otherboidsTocurrBoid;
+                }
+
+
                 if (ShowGizmos == true)
                 {
                     if (betweendistance < SeparationDistanceVal)
                     {
+                        
                         Debug.DrawLine(transform.position, allboids[i].transform.position, Color.red);
                     }
                     else
                     {
-                        Debug.DrawLine(transform.position, allboids[i].transform.position, Color.yellow);
+                        if (allboids[i].BoidTypeID == BoidTypeID)
+                        {
+                            Debug.DrawLine(transform.position, allboids[i].transform.position, Color.yellow);
+                        }
+                        else if (allboids[i].BoidTypeID != BoidTypeID)
+                        {
+                            Debug.DrawLine(transform.position, allboids[i].transform.position, Color.magenta);
+                        }
+
+
                     }
 
                 }
@@ -181,13 +204,17 @@ public class BoidsController : MonoBehaviour
         int count = 0;
         for (int i = 0; i < allboids.Length; i++)
         {
-            float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
-
-            if (betweendistance < aliagmentdistance)
+            if (allboids[i].BoidTypeID == BoidTypeID)
             {
-                alignmentVelocity += allboids[i].GetComponent<BoidsController>().velocity;
-                count++;
+                float betweendistance = Vector3.Distance(allboids[i].transform.position, transform.position);
+
+                if (betweendistance < aliagmentdistance)
+                {
+                    alignmentVelocity += allboids[i].GetComponent<BoidsController>().velocity;
+                    count++;
+                }
             }
+    
         }
 
         if (count > 0)
@@ -214,31 +241,26 @@ public class BoidsController : MonoBehaviour
 
             if (betweendistance < neighborsDistanceVal)
             {
-                CohesionPoint += allboids[i].transform.position + (allboids[i].GetComponent<BoidsController>().velocity * 10f);
-                count++;
+                if (allboids[i].BoidTypeID == BoidTypeID) {
+                    CohesionPoint += allboids[i].transform.position + (allboids[i].GetComponent<BoidsController>().velocity * cohesionCombindDistance);
+                    count++;
+                }
+
             }
         }
 
         if (count > 0) {
 
-            CohesionPoint /= (float)count;
+                CohesionPoint /= (float)count;
             //CohesionVelocity -= transform.position;
             //CohesionPoint.Normalize();
+            
             if (ShowGizmos == true)
             {
-                Debug.DrawLine(transform.position, CohesionPoint * 10f, Color.red);
+               // Debug.DrawLine(transform.position, CohesionPoint * cohesionCombindDistance, Color.red);
             }
             
             return (CohesionPoint - transform.position).normalized;
-
-            //Vector3 cohesionDirection = CohesionVelocity - transform.position;
-            //cohesionDirection.Normalize();
-            //cohesionDirection *= speed;
-            //Vector3 steering = cohesionDirection - velocity;
-            //steering = Vector3.ClampMagnitude(steering, maxforce);
-            
-
-            //return steering * cohesionWeight;
         }
         return Vector3.zero;
     }

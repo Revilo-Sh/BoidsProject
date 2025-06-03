@@ -7,7 +7,8 @@ using UnityEngine;
 public class Flock : MonoBehaviour
 {
     [SerializeField] private GameObject flockUnitPrefab;
-    [SerializeField] private int GroupSize;
+    [SerializeField] private int BoidAmount;
+    [SerializeField] private int DiffentTypeAmount = 1;
     [SerializeField] private Vector3 spawnbounds;
 
     public GameObject[] allUnits { get; set; }
@@ -21,7 +22,7 @@ public class Flock : MonoBehaviour
 
     private void GenerateUnits()
     {
-        allUnits = new GameObject[GroupSize];
+        allUnits = new GameObject[BoidAmount];
         for (int i = 0; i < allUnits.Length; i++) {
             var randomVector = UnityEngine.Random.insideUnitSphere;
             randomVector = new Vector3(randomVector.x * spawnbounds.x, randomVector.y * spawnbounds.y, randomVector.z * spawnbounds.z);
